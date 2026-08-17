@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: .
+    image: iade-takip-sistemi-backend:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+  frontend:
+    build: ./frontend
+    image: iade-takip-sistemi-frontend:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL}

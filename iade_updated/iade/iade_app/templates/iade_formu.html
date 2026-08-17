@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="tr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>İade Takip Formu</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;background:#f5f5f3}
+.wrap{padding:1.5rem;max-width:1300px;margin:0 auto}
+h1{font-size:17px;font-weight:700;margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #ddd}
+.nav{display:flex;gap:8px;margin-bottom:1.25rem}
+.nav button{font-size:13px;padding:7px 18px;border-radius:8px;border:1px solid #ccc;background:#fff;color:#333;cursor:pointer;font-weight:600}
+.nav button.active{background:#1a56db;color:#fff;border-color:#1a56db}
+.section{background:#fff;border:1px solid #e0e0e0;border-radius:10px;margin-bottom:.8rem;overflow:hidden}
+.section-title{background:#f0f0ee;padding:.55rem 1rem;font-size:12px;font-weight:700;color:#444;border-bottom:1px solid #e0e0e0}
+.section-body{padding:.7rem 1rem;display:grid;grid-template-columns:1fr 1fr;gap:.5rem .9rem}
+.section-body.three{grid-template-columns:1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:3px}
+.field.full{grid-column:1/-1}
+label{font-size:11px;color:#666;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+input[type=text],input[type=date],select,textarea{width:100%;padding:5px 8px;border:1px solid #ccc;border-radius:6px;background:#fff;color:#1a1a1a;font-size:12px;font-family:Arial,sans-serif}
+input[type=text]:focus,input[type=date]:focus,select:focus{outline:none;border-color:#1a56db}
+input[readonly]{background:#f7f7f7;color:#555;cursor:default}
+textarea{resize:vertical;min-height:50px}
+.section-footer{padding:.6rem 1rem;border-top:1px solid #f0f0ee;display:flex;justify-content:flex-end;gap:8px;background:#fafaf8}
+.btn{padding:6px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid #ccc;background:#fff;color:#333}
+.btn:hover{background:#f0f0ee}
+.btn.primary{background:#1a56db;color:#fff;border-color:#1a56db}
+.btn.primary:hover{background:#1447b8}
+.btn.danger{color:#c0392b;border-color:#c0392b}
+.btn.success{background:#16a34a;color:#fff;border-color:#16a34a}
+.btn.sm{padding:4px 12px;font-size:11px}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.5rem;width:95%;max-width:900px;max-height:90vh;overflow-y:auto;position:relative}
+.modal h2{font-size:15px;font-weight:700;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid #eee}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem;padding-top:.75rem;border-top:1px solid #eee}
+.close-btn{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:18px;cursor:pointer;color:#666}
+
+/* RAPOR */
+.summary-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1rem}
+.stat-card{background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:.7rem .9rem}
+.stat-card .slabel{font-size:11px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.stat-card .sval{font-size:26px;font-weight:700}
+.sval.green{color:#16a34a}.sval.kirmizi{color:#dc2626}.sval.sari{color:#ca8a04}
+
+.rapor-actions{display:flex;gap:8px;justify-content:flex-end;margin-bottom:.75rem;align-items:center}
+#filter-count{font-size:12px;color:#888;margin-right:auto}
+
+.tbl-wrap{overflow-x:auto;border:1px solid #e0e0e0;border-radius:10px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:1800px}
+thead tr.header-row{background:#f0f0ee}
+thead tr.filter-row{background:#fafaf8;border-bottom:2px solid #e0e0e0}
+th{padding:8px 7px;text-align:left;border-bottom:1px solid #e0e0e0;white-space:nowrap;font-weight:700;color:#555;cursor:pointer;user-select:none;font-size:11px;vertical-align:middle}
+th.no-sort{cursor:default}
+th:not(.no-sort):hover{color:#1a56db}
+td{padding:6px 7px;border-bottom:1px solid #f0f0ee;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafaf8}
+.filter-row th{padding:4px 5px;font-weight:normal}
+.filter-row input,.filter-row select{width:100%;padding:3px 5px;border:1px solid #ccc;border-radius:5px;font-size:11px;font-family:Arial,sans-serif;background:#fff}
+.filter-row input:focus,.filter-row select:focus{outline:none;border-color:#1a56db}
+
+/* BADGE */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.badge.sari{background:#fef08a;color:#92400e}
+.badge.kirmizi{background:#fee2e2;color:#b91c1c}
+.badge.green{background:#dcfce7;color:#15803d}
+.badge.gray{background:#f3f4f6;color:#6b7280}
+.empty-row td{text-align:center;padding:2rem;color:#999}
+.edit-btn{padding:2px 8px;font-size:11px;border-radius:5px;border:1px solid #1a56db;background:#fff;color:#1a56db;cursor:pointer;font-weight:700}
+.edit-btn:hover{background:#1a56db;color:#fff}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="nav">
+  <button type="button" onclick="showTab('kayit',this)">✎ Kayıt Ekranı</button>
+  <button type="button" onclick="showTab('rapor',this)">Rapor</button>
+  <button type="button" onclick="showTab('admin',this)">Admin Paneli</button>
+</div>
+
+<!-- KAYIT EKRANI -->
+<div id="tab-kayit" style="display: none;">
+<h1>↩ İade Kayıt Ekranı</h1>
+
+<!-- BÖLÜM 1: KALİTE -->
+<div class="section">
+  <div class="section-title">✓ Kalite</div>
+  <div class="section-body">
+    <div class="field"><label>Karel İş Kolu</label><select id="k_is_kolu"><option>SAVUNMA ARGE</option><option>SAVUNMA EMS</option></select></div>
+    <div class="field"><label>Müşteri İade Nedeni</label><input type="text" id="k_iade_nedeni"></div>
+    <div class="field"><label>İade İlk Kabul Onayı - Etiketleme</label><input type="text" id="k_etiketleme"></div>
+    <div class="field"><label>Müşteri</label><input type="text" id="k_musteri"></div>
+    <div class="field"><label>Müşteri Bildirim No</label><input type="text" id="k_bildirim_no"></div>
+    <div class="field"><label>Bildirim Tarihi</label><input type="text" id="k_bildirim_tarihi" placeholder="GG.AA.YYYY" oninput="calcDurations()"></div>
+    <div class="field"><label>Müşteri Stok No</label><input type="text" id="k_musteri_stok"></div>
+    <div class="field"><label>Karel Stok No</label><input type="text" id="k_karel_stok"></div>
+    <div class="field"><label>Ürün Tanımı</label><input type="text" id="k_urun_tanimi"></div>
+    <div class="field"><label>Proje</label><input type="text" id="k_proje"></div>
+    <div class="field"><label>Bildirilen Seri No</label><input type="text" id="k_seri_no"></div>
+    <div class="field"><label>Kaliteye Geliş Tarihi</label><input type="text" id="k_kalite_gelis" placeholder="GG.AA.YYYY" oninput="calcDurations()"></div>
+    <div class="field"><label>Üretime Aktarım Tarihi</label><input type="text" id="k_uretim_aktarim" placeholder="GG.AA.YYYY" oninput="calcDurations()"></div>
+    <div class="field"><label>Sevkiyat Depoya Aktarım Tarihi</label><input type="text" id="k_sevk_depo_aktarim" placeholder="GG.AA.YYYY" oninput="calcDurations()"></div>
+    <div class="field"><label>Kalite Kontrol + 8D</label><select id="k_8d"><option value="">Seçiniz</option><option>OK</option><option>NOK</option></select></div>
+    <div class="field"><label>ECO/DK Kontrolü</label><select id="k_eco"><option value="">Seçiniz</option><option>Var</option><option>Yok</option><option>Belirsiz</option></select></div>
+    <div class="field"><label>Kaynağında Denetim</label><select id="k_denetim"><option value="">Seçiniz</option><option>Geçti</option><option>Geçmedi</option></select></div>
+    <div class="field full"><label>Hata Türü</label>
+      <select id="k_hata_turu">
+        <option value="">Seçiniz</option>
+        <option>Hatalı/Arızalı Malzeme</option><option>BDK Hatası</option><option>Eksik Malzeme</option>
+        <option>Malzeme Yönü Ters</option><option>Havada Malzeme</option><option>Hasarlı/Darbeli Malzeme</option>
+        <option>Hatalı Montaj</option><option>Malzeme Bacağı Uzun/Kısa</option><option>Malzeme Kaymış</option>
+        <option>Malzeme Bacağı Girmemiş</option><option>Fazla Malzeme</option><option>Yanlış Malzeme Montajı</option>
+        <option>Yetersiz Lehim</option><option>Lehimsiz</option><option>Lehim Uzantısı/Sıçraması</option>
+        <option>Kısa Devre</option><option>Lehim Topu</option><option>Gaz Kaçağı</option>
+        <option>Fazla Lehim</option><option>Tombstone (mezartası)</option><option>Soğuk/Çatlak Lehim</option>
+        <option>Pad Kalkması</option><option>Lehimlenebilirlik</option><option>Billboarding</option>
+        <option>Ambalaj Hatası</option><option>Etiket Hatası</option><option>ECO Uygulama Hatası</option>
+        <option>Ürün Dökümanı Uygulanmamış/Eksik Uygulanmış</option><option>Hatalı/Eksik Sevk Donanımı</option>
+        <option>Fonksiyon Hatası</option><option>Yazılım Hatası</option><option>Kablaj Hatası</option>
+        <option>Kaplama Uygulama Hatası</option><option>Kimyasal Uygulama Hatası</option><option>Kötü Görünüm</option>
+        <option>İşleyiş/Proses Hatası</option><option>Gruplama Hatası</option>
+        <option>Hata Bulunamadı/Hata Yok</option><option>Sızdırma Hatası</option>
+      </select>
+    </div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('kalite')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('kalite')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 2: KALİTE - PROJE SOP -->
+<div class="section">
+  <div class="section-title">📄 Kalite - Proje (SOP)</div>
+  <div class="section-body">
+    <div class="field"><label>Müşteri - Kalite Mutabakat Durumu</label>
+      <select id="k_mutabakat" onchange="calcStatus()"><option value="">Seçiniz</option><option>İade Kabul</option><option>İade Ret</option></select></div>
+    <div class="field"><label>Nihai Garanti Üzerine Müşteri Mütabakatı</label>
+      <select id="k_nihai_mutabakat"><option value="">Seçiniz</option><option>Var</option><option>Yok</option><option>Belirsiz</option></select></div>
+    <div class="field"><label>Müşteri Onarım Mütabakatı</label>
+      <select id="k_onarim_mutabakat"><option value="">Seçiniz</option><option>Var</option><option>Yok</option><option>Belirsiz</option></select></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('sop')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('sop')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 3: ÜRETİM - KALİTE -->
+<div class="section">
+  <div class="section-title">🔧 Üretim - Kalite</div>
+  <div class="section-body">
+    <div class="field"><label>İlk Sevk. Tarihi (Garanti Başlangıç Tarihi)</label><input type="text" id="k_ilk_sevk" placeholder="GG.AA.YYYY"></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('uretimkalite')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('uretimkalite')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 4: FORMÜL + PROJE -->
+<div class="section">
+  <div class="section-title">🛡 Formül + Proje (SOP) + Kalite + Üretim</div>
+  <div class="section-body">
+    <div class="field"><label>Garanti Durumu</label>
+      <select id="k_garanti"><option value="">Seçiniz</option><option>Garanti İçi</option><option>Garanti Dışı</option><option>Belirsiz</option></select></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('formul')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('formul')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 5: PLANLAMA -->
+<div class="section">
+  <div class="section-title">📅 Planlama</div>
+  <div class="section-body">
+    <div class="field"><label>Faturalı / Faturasız</label>
+      <select id="k_fatura"><option value="">Seçiniz</option><option>Faturalı</option><option>Faturasız</option></select></div>
+    <div class="field"><label>İş Emri Açılış Tarihi</label><input type="text" id="k_is_emri_acilis" placeholder="GG.AA.YYYY" oninput="calcDurations()"></div>
+    <div class="field full"><label>İş Emri</label><input type="text" id="k_is_emri"></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('planlama')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('planlama')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 6: PLANLAMA SEVKİYAT DEPO -->
+<div class="section">
+  <div class="section-title">🚚 Planlama (Sevkiyat Depo)</div>
+  <div class="section-body">
+    <div class="field"><label>Müşteri İrsaliye No</label><input type="text" id="k_irsaliye_no"></div>
+    <div class="field"><label>Müşteri İrsaliye Tarihi</label><input type="text" id="k_irsaliye_tarihi" placeholder="GG.AA.YYYY" oninput="calcDurations()"></div>
+    <div class="field"><label>Müşteri Sipariş No</label><input type="text" id="k_siparis_no"></div>
+    <div class="field"><label>Gelen Ürün Seri No</label><input type="text" id="k_gelen_seri"></div>
+    <div class="field"><label>Karel İrsaliye No</label><input type="text" id="k_karel_irsaliye"></div>
+    <div class="field"><label>İade Sevk Tarihi</label><input type="text" id="k_iade_sevk_tarihi" placeholder="GG.AA.YYYY" oninput="calcDurations();calcStatus()"></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('sevkdepo')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('sevkdepo')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 7: ÜRETİM -->
+<div class="section">
+  <div class="section-title">⚙ Üretim</div>
+  <div class="section-body">
+    <div class="field"><label>Hedeflenen Onarım Tarihi</label><input type="text" id="k_hdef_onarim" placeholder="GG.AA.YYYY"></div>
+    <div class="field"><label>Gerçekleşen Onarım Tarihi</label><input type="text" id="k_grc_onarim" placeholder="GG.AA.YYYY"></div>
+    <div class="field full"><label>Onarım Açıklama</label><textarea id="k_onarim_aciklama"></textarea></div>
+    <div class="field"><label>Proforma Numarası (GD ise)</label><input type="text" id="k_proforma"></div>
+    <div class="field"><label>Kaliteye Aktarım Tarihi</label><input type="text" id="k_kaliteye_aktarim" placeholder="GG.AA.YYYY" oninput="calcDurations()"></div>
+    <div class="field"><label>ECO/DK Kontrolü (Üretim)</label><select id="k_eco_uretim"><option value="">Seçiniz</option><option>Var</option><option>Yok</option><option>Belirsiz</option></select></div>
+    <div class="field"><label>Hedeflenen Hata Tespit Tarihi</label><input type="text" id="k_hdef_hata" placeholder="GG.AA.YYYY"></div>
+    <div class="field"><label>Gerçekleşen Hata Tespit Tarihi</label><input type="text" id="k_grc_hata" placeholder="GG.AA.YYYY"></div>
+    <div class="field full"><label>Üretim Bulgusu</label><textarea id="k_uretim_bulgusu"></textarea></div>
+    <div class="field full"><label>Malzeme İhtiyaç Planlama / Temin Sözleşme Durumu</label><input type="text" id="k_malzeme_planlama"></div>
+    <div class="field"><label>NFF Durumu (Hata Tespit Durumu)</label>
+      <select id="k_nff"><option value="">Seçiniz</option><option>Var</option><option>Yok</option></select></div>
+    <div class="field"><label>Nihai Garanti Durumu</label>
+      <select id="k_nihai_garanti"><option value="">Seçiniz</option><option>Garanti İçi</option><option>Garanti Dışı</option><option>Belirsiz</option></select></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('uretim')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('uretim')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 8: ÜRETİM / PLANLAMA -->
+<div class="section">
+  <div class="section-title">◷ Üretim / Planlama</div>
+  <div class="section-body">
+    <div class="field"><label>Bekleme Nedeni</label>
+      <select id="k_bekleme"><option value="">Seçiniz</option><option>Müşteri</option><option>Karel</option></select></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn sm" onclick="clearSection('bekleme')">✕ Temizle</button>
+    <button type="button" class="btn primary sm" onclick="saveSection('bekleme')">💾 Kaydet</button>
+  </div>
+</div>
+
+<!-- BÖLÜM 9: HESAPLANAN SÜRELER -->
+<div class="section">
+  <div class="section-title">⌛ Hesaplanan Süreler ve Durum</div>
+  <div class="section-body three">
+    <div class="field"><label>Bildirim - Depo Arası</label><input type="text" id="d_bildirim_depo" readonly=""></div>
+    <div class="field"><label>Depo - İş Emri Arası</label><input type="text" id="d_depo_isemri" readonly=""></div>
+    <div class="field"><label>İş Emri - Kalite Arası</label><input type="text" id="d_isemri_kalite" readonly=""></div>
+    <div class="field"><label>Kalite - Üretim Arası</label><input type="text" id="d_kalite_uretim" readonly=""></div>
+    <div class="field"><label>Üretim - Kalite Arası</label><input type="text" id="d_uretim_kalite" readonly=""></div>
+    <div class="field"><label>Kalite - Sevkiyat Depo Arası</label><input type="text" id="d_kalite_sevkdepo" readonly=""></div>
+    <div class="field"><label>Sevkiyat Depo - Sevkiyat Arası</label><input type="text" id="d_sevkdepo_sevk" readonly=""></div>
+    <div class="field"><label>İade Kabul Sonrası Toplam</label><input type="text" id="d_toplam" readonly="" style="font-weight:700"></div>
+    <div class="field"><label>Durum</label><input type="text" id="durum_field" readonly="" style="font-weight:700"></div>
+  </div>
+  <div class="section-footer">
+    <button type="button" class="btn primary sm" onclick="saveAllRecord()">💾 Tümünü Kaydet</button>
+  </div>
+</div>
+
+</div><!-- /tab-kayit -->
+
+
+<!-- ADMIN PANELİ -->
+<div id="tab-admin" style="">
+<h1>Admin Paneli</h1>
+<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;margin-bottom:1rem">
+  <div style="background:#f0f0ee;padding:.55rem 1rem;font-size:12px;font-weight:700;color:#444;border-bottom:1px solid #e0e0e0">Kullanicilar</div>
+  <div style="padding:.75rem 1rem">
+    <div style="display:flex;gap:8px;margin-bottom:.75rem;align-items:center">
+      <button type="button" class="btn sm" onclick="addAdminRow()">Add Row</button>
+      <button type="button" class="btn primary sm" onclick="saveAdminData()">💾 Save</button>
+      <button type="button" class="btn danger sm" onclick="deleteSelectedAdmin()">🗑 Secilenleri Sil</button>
+    </div>
+    <div style="overflow-x:auto">
+    <table id="admin-table" style="width:100%;border-collapse:collapse;font-size:12px;min-width:500px">
+    <thead>
+      <tr style="background:#f0f0ee">
+        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e0e0e0;width:36px"><input type="checkbox" id="admin-check-all" onclick="toggleAllAdmin(this)"></th>
+        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e0e0e0;width:36px"></th>
+        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e0e0e0;font-weight:700;color:#555;width:50%">Kullanici Adi</th>
+        <th style="padding:8px 10px;text-align:left;border-bottom:1px solid #e0e0e0;font-weight:700;color:#555">Rol</th>
+      </tr>
+    </thead>
+    <tbody id="admin-body"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- RAPOR EKRANI -->
+<div id="tab-rapor" style="display:none">
+<h1>İade Takip Raporu</h1>
+<div class="summary-bar">
+  <div class="stat-card"><div class="slabel">Toplam Kayıt</div><div class="sval" id="s-toplam">20</div></div>
+  <div class="stat-card"><div class="slabel">Açık</div><div class="sval kirmizi" id="s-acik">6</div></div>
+  <div class="stat-card"><div class="slabel">Kapalı</div><div class="sval green" id="s-kapali">7</div></div>
+  <div class="stat-card"><div class="slabel">İade Ret</div><div class="sval sari" id="s-ret">7</div></div>
+</div>
+<div class="rapor-actions">
+  <span id="filter-count">20 kayıt gösteriliyor</span>
+  <button type="button" class="btn" onclick="clearFilters()">↻ Filtreleri Temizle</button>
+  <button type="button" class="btn success" onclick="exportCSV()">⇓ CSV İndir</button>
+</div>
+<div class="tbl-wrap">
+<table>
+<thead>
+<tr class="header-row">
+  <th class="no-sort">Düzenle</th>
+  <th onclick="sortTable(0)"># ↕</th>
+  <th onclick="sortTable(1)">Müşteri ↕</th>
+  <th onclick="sortTable(2)">İş Kolu ↕</th>
+  <th onclick="sortTable(3)">Bildirim No ↕</th>
+  <th onclick="sortTable(4)">Bildirim Tarihi ↕</th>
+  <th onclick="sortTable(5)">Karel Stok No ↕</th>
+  <th onclick="sortTable(6)">Ürün Tanımı ↕</th>
+  <th onclick="sortTable(7)">Proje ↕</th>
+  <th onclick="sortTable(8)">Hata Türü ↕</th>
+  <th onclick="sortTable(9)">Mutabakat ↕</th>
+  <th onclick="sortTable(10)">Garanti ↕</th>
+  <th onclick="sortTable(11)">Bill.→Depo ↕</th>
+  <th onclick="sortTable(12)">Depo→İşEm. ↕</th>
+  <th onclick="sortTable(13)">İşEm.→Kal. ↕</th>
+  <th onclick="sortTable(14)">Kal.→Üret. ↕</th>
+  <th onclick="sortTable(15)">Üret.→Kal. ↕</th>
+  <th onclick="sortTable(16)">Kal.→SevkD. ↕</th>
+  <th onclick="sortTable(17)">SevkD.→Sevk. ↕</th>
+  <th onclick="sortTable(18)">Toplam ↕</th>
+  <th onclick="sortTable(19)">Durum ↕</th>
+</tr>
+<tr class="filter-row">
+  <th></th><th></th>
+  <th><input type="text" id="f_musteri" oninput="applyFilters()" placeholder="Ara..."></th>
+  <th><select id="f_is_kolu" onchange="applyFilters()"><option value="">Tümü</option><option>SAVUNMA ARGE</option><option>SAVUNMA EMS</option></select></th>
+  <th><input type="text" id="f_bildirim_no" oninput="applyFilters()" placeholder="Ara..."></th>
+  <th><input type="text" id="f_bildirim_tarihi" oninput="applyFilters()" placeholder="GG.AA.YYYY veya GG.AA.YYYY - GG.AA.YYYY"></th>
+  <th><input type="text" id="f_karel_stok" oninput="applyFilters()" placeholder="Ara..."></th>
+  <th><input type="text" id="f_urun" oninput="applyFilters()" placeholder="Ara..."></th>
+  <th><input type="text" id="f_proje" oninput="applyFilters()" placeholder="Ara..."></th>
+  <th><select id="f_hata" onchange="applyFilters()">
+    <option value="">Tümü</option>
+    <option>Hatalı/Arızalı Malzeme</option><option>BDK Hatası</option><option>Eksik Malzeme</option>
+    <option>Fonksiyon Hatası</option><option>Yazılım Hatası</option><option>Kablaj Hatası</option>
+    <option>Soğuk/Çatlak Lehim</option><option>Kısa Devre</option><option>Hasarlı/Darbeli Malzeme</option>
+    <option>Ambalaj Hatası</option><option>Etiket Hatası</option><option>Hata Bulunamadı/Hata Yok</option>
+  </select></th>
+  <th><select id="f_mutabakat" onchange="applyFilters()"><option value="">Tümü</option><option>İade Kabul</option><option>İade Ret</option></select></th>
+  <th><select id="f_garanti" onchange="applyFilters()"><option value="">Tümü</option><option>Garanti İçi</option><option>Garanti Dışı</option><option>Belirsiz</option></select></th>
+  <th></th><th></th><th></th><th></th><th></th><th></th><th></th><th></th>
+  <th><select id="f_durum" onchange="applyFilters()"><option value="">Tümü</option><option>Açık</option><option>Kapalı</option><option>İade Ret</option></select></th>
+</tr>
+</thead>
+<tbody id="report-body"></tbody>
+</table>
+</div>
+</div>
+
+<!-- DÜZENLEME MODAL -->
+<div class="modal-bg" id="editModal">
+<div class="modal">
+  <button type="button" class="close-btn" onclick="closeModal()">✕</button>
+  <h2>✎ Kaydı Düzenle — <span id="modal-title"></span></h2>
+  <input type="hidden" id="edit_idx">
+  <div class="section" style="margin-bottom:.7rem">
+    <div class="section-title">Kalite</div>
+    <div class="section-body">
+      <div class="field"><label>Karel İş Kolu</label><select id="e_is_kolu"><option>SAVUNMA ARGE</option><option>SAVUNMA EMS</option></select></div>
+      <div class="field"><label>Müşteri</label><input type="text" id="e_musteri"></div>
+      <div class="field"><label>Müşteri Bildirim No</label><input type="text" id="e_bildirim_no"></div>
+      <div class="field"><label>Bildirim Tarihi</label><input type="text" id="e_bildirim_tarihi" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+      <div class="field"><label>Karel Stok No</label><input type="text" id="e_karel_stok"></div>
+      <div class="field"><label>Ürün Tanımı</label><input type="text" id="e_urun_tanimi"></div>
+      <div class="field"><label>Proje</label><input type="text" id="e_proje"></div>
+      <div class="field"><label>Kaliteye Geliş Tarihi</label><input type="text" id="e_kalite_gelis" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+      <div class="field"><label>Üretime Aktarım Tarihi</label><input type="text" id="e_uretim_aktarim" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+      <div class="field"><label>Sevkiyat Depoya Aktarım Tarihi</label><input type="text" id="e_sevk_depo_aktarim" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+      <div class="field full"><label>Hata Türü</label>
+        <select id="e_hata_turu">
+          <option value="">Seçiniz</option>
+          <option>Hatalı/Arızalı Malzeme</option><option>BDK Hatası</option><option>Eksik Malzeme</option>
+          <option>Malzeme Yönü Ters</option><option>Havada Malzeme</option><option>Hasarlı/Darbeli Malzeme</option>
+          <option>Hatalı Montaj</option><option>Malzeme Bacağı Uzun/Kısa</option><option>Malzeme Kaymış</option>
+          <option>Malzeme Bacağı Girmemiş</option><option>Fazla Malzeme</option><option>Yanlış Malzeme Montajı</option>
+          <option>Yetersiz Lehim</option><option>Lehimsiz</option><option>Lehim Uzantısı/Sıçraması</option>
+          <option>Kısa Devre</option><option>Lehim Topu</option><option>Gaz Kaçağı</option>
+          <option>Fazla Lehim</option><option>Tombstone (mezartası)</option><option>Soğuk/Çatlak Lehim</option>
+          <option>Pad Kalkması</option><option>Lehimlenebilirlik</option><option>Billboarding</option>
+          <option>Ambalaj Hatası</option><option>Etiket Hatası</option><option>ECO Uygulama Hatası</option>
+          <option>Ürün Dökümanı Uygulanmamış/Eksik Uygulanmış</option><option>Hatalı/Eksik Sevk Donanımı</option>
+          <option>Fonksiyon Hatası</option><option>Yazılım Hatası</option><option>Kablaj Hatası</option>
+          <option>Kaplama Uygulama Hatası</option><option>Kimyasal Uygulama Hatası</option><option>Kötü Görünüm</option>
+          <option>İşleyiş/Proses Hatası</option><option>Gruplama Hatası</option>
+          <option>Hata Bulunamadı/Hata Yok</option><option>Sızdırma Hatası</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="section" style="margin-bottom:.7rem">
+    <div class="section-title">Mutabakat / Garanti / Sevkiyat</div>
+    <div class="section-body">
+      <div class="field"><label>Mutabakat Durumu</label>
+        <select id="e_mutabakat" onchange="calcEditDurations()"><option value="">Seçiniz</option><option>İade Kabul</option><option>İade Ret</option></select></div>
+      <div class="field"><label>Garanti Durumu</label>
+        <select id="e_garanti"><option value="">Seçiniz</option><option>Garanti İçi</option><option>Garanti Dışı</option><option>Belirsiz</option></select></div>
+      <div class="field"><label>İş Emri Açılış Tarihi</label><input type="text" id="e_is_emri_acilis" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+      <div class="field"><label>Müşteri İrsaliye Tarihi</label><input type="text" id="e_irsaliye_tarihi" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+      <div class="field"><label>Kaliteye Aktarım Tarihi</label><input type="text" id="e_kaliteye_aktarim" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+      <div class="field"><label>İade Sevk Tarihi</label><input type="text" id="e_iade_sevk_tarihi" placeholder="GG.AA.YYYY" oninput="calcEditDurations()"></div>
+    </div>
+  </div>
+  <div class="section" style="margin-bottom:.7rem">
+    <div class="section-title">Hesaplanan Süreler</div>
+    <div class="section-body three">
+      <div class="field"><label>Bill.→Depo</label><input type="text" id="ed_1" readonly=""></div>
+      <div class="field"><label>Depo→İşEm.</label><input type="text" id="ed_2" readonly=""></div>
+      <div class="field"><label>İşEm.→Kal.</label><input type="text" id="ed_3" readonly=""></div>
+      <div class="field"><label>Kal.→Üret.</label><input type="text" id="ed_4" readonly=""></div>
+      <div class="field"><label>Üret.→Kal.</label><input type="text" id="ed_5" readonly=""></div>
+      <div class="field"><label>Kal.→SevkD.</label><input type="text" id="ed_6" readonly=""></div>
+      <div class="field"><label>SevkD.→Sevk.</label><input type="text" id="ed_7" readonly=""></div>
+      <div class="field"><label>Toplam</label><input type="text" id="ed_toplam" readonly="" style="font-weight:700"></div>
+      <div class="field"><label>Durum</label><input type="text" id="ed_durum" readonly="" style="font-weight:700"></div>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button type="button" class="btn danger" onclick="deleteRecord()">🗑 Kaydı Sil</button>
+    <button type="button" class="btn" onclick="closeModal()">İptal</button>
+    <button type="button" class="btn primary" onclick="updateRecord()">✓ Güncelle</button>
+  </div>
+</div>
+</div>
+
+<script>
+var records=[],filteredRecords=[],sortCol=-1,sortDir=1;
+var aktifKayitId = null;
+
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function pick(arr){return arr[rnd(0,arr.length-1)];}
+function fmtDate(d){return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();}
+function addDays(d,n){var r=new Date(d);r.setDate(r.getDate()+n);return r;}
+
+function generateRandom(){
+  var musteriList=['Aselsan A.Ş.','Roketsan Ltd.','Havelsan A.Ş.','STM Savunma','Türk Havacılık','Milsoft Ltd.','Meteksan Savunma','FNSS Savunma'];
+  var urunList=['Radar Kontrol Kartı','RF Güç Amplifikatörü','Navigasyon Modülü','Şifreli Haberleşme Kartı','Servo Motor Sürücü','Güç Dağıtım Paneli','Görüntü İşleme Kartı','Enkoder Kartı'];
+  var projeList=['PRJ-ANKA','PRJ-ATAK','PRJ-HISAR','PRJ-KIRPI','PRJ-ZAHA','PRJ-COBRA'];
+  var hatalarList=['Fonksiyon Hatası','Yazılım Hatası','Kablaj Hatası','Soğuk/Çatlak Lehim','Kısa Devre','Hatalı/Arızalı Malzeme','BDK Hatası','Eksik Malzeme','Hasarlı/Darbeli Malzeme','Hata Bulunamadı/Hata Yok'];
+  var garantiList=['Garanti İçi','Garanti Dışı','Belirsiz'];
+  var base=new Date(2024,0,1);
+  for(var i=0;i<20;i++){
+    var bd=addDays(base,rnd(0,365)),irs=addDays(bd,rnd(3,15)),iem=addDays(irs,rnd(2,10));
+    var kge=addDays(iem,rnd(1,8)),ura=addDays(kge,rnd(2,12)),kat=addDays(ura,rnd(3,14));
+    var sda=addDays(kat,rnd(1,7));
+    var mut=pick(['İade Kabul','İade Kabul','İade Kabul','İade Ret']);
+    var hasIsv=(mut==='İade Kabul')&&(Math.random()>0.4);
+    var isvd=hasIsv?addDays(sda,rnd(2,10)):null;
+    var d1=Math.round((irs-bd)/86400000),d2=Math.round((iem-irs)/86400000),d3=Math.round((kge-iem)/86400000);
+    var d4=Math.round((ura-kge)/86400000),d5=Math.round((kat-ura)/86400000),d6=Math.round((sda-kat)/86400000);
+    var d7=isvd?Math.round((isvd-sda)/86400000):null;
+    var toplam=(d2!==null&&d7!==null)?d2+d7:null;
+    var durum='—';
+    if(mut==='İade Ret') durum='İade Ret';
+    else if(mut==='İade Kabul') durum=isvd?'Kapalı':'Açık';
+    records.push({id:records.length+1,isKolu:pick(['SAVUNMA ARGE','SAVUNMA EMS']),musteri:pick(musteriList),
+      bildirimNo:'BLD-'+String(2024000+rnd(100,999)),bildirimTarihi:fmtDate(bd),
+      karelStok:'KRL-'+rnd(1000,9999),urunTanimi:pick(urunList),proje:pick(projeList),
+      hataTuru:pick(hatalarList),mutabakat:mut,garantiDurumu:pick(garantiList),
+      irsaliyeTarihi:fmtDate(irs),isEmriTarihi:fmtDate(iem),kaliteGelisTarihi:fmtDate(kge),
+      uretimAktarimTarihi:fmtDate(ura),kaliteAktarimTarihi:fmtDate(kat),sevkDepoTarihi:fmtDate(sda),
+      iadeSevkTarihi:isvd?fmtDate(isvd):'',d1:d1,d2:d2,d3:d3,d4:d4,d5:d5,d6:d6,d7:d7,toplam:toplam,durum:durum});
+  }
+  filteredRecords=records.slice();
+  renderReport();updateSummary();
+  var fc = document.getElementById('filter-count');
+  if(fc) fc.textContent=records.length+' kayıt gösteriliyor';
+}
+
+function showTab(tab,btn){
+  document.getElementById('tab-kayit').style.display=tab==='kayit'?'block':'none';
+  document.getElementById('tab-rapor').style.display=tab==='rapor'?'block':'none';
+  document.getElementById('tab-admin').style.display=tab==='admin'?'block':'none';
+  document.querySelectorAll('.nav button').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  if(tab==='rapor'){filteredRecords=records.slice();renderReport();updateSummary();}
+  if(tab==='admin'){renderAdminTable();}
+}
+
+function g(id){var el=document.getElementById(id);return el?el.value:'';}
+function sv(id,val){var el=document.getElementById(id);if(el)el.value=val||'';}
+function sel(id,val){var el=document.getElementById(id);if(!el)return;for(var i=0;i<el.options.length;i++){if(el.options[i].value===val){el.selectedIndex=i;break;}}}
+function parseDate(s){if(!s)return null;var p=s.split('.');if(p.length!==3)return null;var d=new Date(p[2],p[1]-1,p[0]);return isNaN(d.getTime())?null:d;}
+function daysDiff(a,b){if(!a||!b)return null;return Math.round((b-a)/86400000);}
+function fmtDays(n){return(n===null||n===undefined||isNaN(n))?'—':n+' gün';}
+
+function calcDurations(){
+  var bil=parseDate(g('k_bildirim_tarihi')),irs=parseDate(g('k_irsaliye_tarihi'));
+  var iem=parseDate(g('k_is_emri_acilis')),kge=parseDate(g('k_kalite_gelis'));
+  var ura=parseDate(g('k_uretim_aktarim')),kat=parseDate(g('k_kaliteye_aktarim'));
+  var sda=parseDate(g('k_sevk_depo_aktarim')),isv=parseDate(g('k_iade_sevk_tarihi'));
+  sv('d_bildirim_depo',fmtDays(daysDiff(bil,irs)));sv('d_depo_isemri',fmtDays(daysDiff(irs,iem)));
+  sv('d_isemri_kalite',fmtDays(daysDiff(iem,kge)));sv('d_kalite_uretim',fmtDays(daysDiff(kge,ura)));
+  sv('d_uretim_kalite',fmtDays(daysDiff(kat,ura)));sv('d_kalite_sevkdepo',fmtDays(daysDiff(kat,sda)));
+  sv('d_sevkdepo_sevk',fmtDays(daysDiff(sda,isv)));
+  var d2=daysDiff(irs,iem),d7=daysDiff(sda,isv);
+  sv('d_toplam',(d2!==null&&d7!==null)?fmtDays(d2+d7):'—');
+}
+function calcStatus(){
+  var mut=g('k_mutabakat'),isv=g('k_iade_sevk_tarihi').trim(),durum='—';
+  if(mut==='İade Ret') durum='İade Ret';
+  else if(mut==='İade Kabul') durum=isv?'Kapalı':'Açık';
+  var el=document.getElementById('durum_field');
+  if(el){
+    el.value=durum;
+    el.style.color=durum==='İade Ret'?'#ca8a04':durum==='Kapalı'?'#16a34a':durum==='Açık'?'#dc2626':'#888';
+  }
+}
+
+function saveSection(sec){
+  if(sec === 'kalite'){
+    saveKaliteSection();
+  } else {
+    if(!aktifKayitId){
+      alert('Önce Kalite bölümünü kaydedin!');
+      return;
+    }
+    saveSectionToDb(sec);
+  }
+}
+
+function saveKaliteSection(){
+  var data = {
+    karel_is_kolu: g('k_is_kolu'),
+    musteri_iade_nedeni: g('k_iade_nedeni'),
+    musteri: g('k_musteri'),
+    musteri_bildirim_no: g('k_bildirim_no'),
+    bildirim_tarihi: g('k_bildirim_tarihi'),
+    musteri_stok_no: g('k_musteri_stok'),
+    karel_stok_no: g('k_karel_stok'),
+    urun_tanimi: g('k_urun_tanimi'),
+    proje: g('k_proje'),
+    bildirilen_seri_no: g('k_seri_no'),
+    kaliteye_gelis_tarihi: g('k_kalite_gelis'),
+    uretim_aktarim_tarihi: g('k_uretim_aktarim'),
+    sevkiyat_depoya_aktarim_tarihi: g('k_sevk_depo_aktarim'),
+    kalite_kontrol_8d: g('k_8d'),
+    eco_dk_kontrolu: g('k_eco'),
+    kaynaginda_denetim: g('k_denetim'),
+    hata_turu: g('k_hata_turu'),
+    durum: 'Açık'
+  };
+
+  if(!data.musteri_bildirim_no && !data.musteri){
+    alert('En az Müşteri veya Bildirim No giriniz!');
+    return;
+  }
+
+  aktifKayitId = records.length + 1;
+  alert('Kalite bölümü kaydedildi. Aktif Kayıt ID: ' + aktifKayitId);
+}
+
+function saveSectionToDb(sec){
+  alert(sec + ' bölümü kaydedildi.');
+}
+
+function saveAllRecord(){
+  if(!aktifKayitId){
+    alert('Önce Kalite bölümünü kaydedin!');
+    return;
+  }
+  ['sop','uretimkalite','formul','planlama','sevkdepo','uretim','bekleme'].forEach(function(sec){
+    saveSectionToDb(sec);
+  });
+  alert('Tüm bölümler kaydedildi.');
+}
+
+function clearSection(sec){
+  var map={
+    kalite:['k_is_kolu','k_iade_nedeni','k_etiketleme','k_musteri','k_bildirim_no','k_bildirim_tarihi','k_musteri_stok','k_karel_stok','k_urun_tanimi','k_proje','k_seri_no','k_kalite_gelis','k_uretim_aktarim','k_sevk_depo_aktarim','k_8d','k_eco','k_denetim','k_hata_turu'],
+    sop:['k_mutabakat','k_nihai_mutabakat'],
+    uretimkalite:['k_ilk_sevk'],
+    formul:['k_garanti'],
+    planlama:['k_fatura','k_is_emri_acilis','k_is_emri'],
+    sevkdepo:['k_irsaliye_no','k_irsaliye_tarihi','k_siparis_no','k_gelen_seri','k_karel_irsaliye','k_iade_sevk_tarihi'],
+    uretim:['k_hdef_onarim','k_grc_onarim','k_onarim_aciklama','k_proforma','k_kaliteye_aktarim','k_eco_uretim','k_hdef_hata','k_grc_hata','k_uretim_bulgusu','k_malzeme_planlama','k_nff','k_nihai_garanti'],
+    bekleme:['k_bekleme']
+  };
+  var ids=map[sec]||[];
+  ids.forEach(function(id){var el=document.getElementById(id);if(el){if(el.tagName==='SELECT')el.selectedIndex=0;else el.value='';}});
+}
+
+function openEditModal(idx){
+  var r=records[idx];if(!r)return;
+  document.getElementById('edit_idx').value=idx;
+  document.getElementById('modal-title').textContent=r.bildirimNo+' — '+r.musteri;
+  sel('e_is_kolu',r.isKolu);sv('e_musteri',r.musteri);sv('e_bildirim_no',r.bildirimNo);
+  sv('e_bildirim_tarihi',r.bildirimTarihi);sv('e_karel_stok',r.karelStok);
+  sv('e_urun_tanimi',r.urunTanimi);sv('e_proje',r.proje);sel('e_hata_turu',r.hataTuru);
+  sel('e_mutabakat',r.mutabakat);sel('e_garanti',r.garantiDurumu);
+  sv('e_kalite_gelis',r.kaliteGelisTarihi);sv('e_uretim_aktarim',r.uretimAktarimTarihi);
+  sv('e_sevk_depo_aktarim',r.sevkDepoTarihi);sv('e_is_emri_acilis',r.isEmriTarihi);
+  sv('e_irsaliye_tarihi',r.irsaliyeTarihi);sv('e_kaliteye_aktarim',r.kaliteAktarimTarihi);
+  sv('e_iade_sevk_tarihi',r.iadeSevkTarihi);
+  calcEditDurations();
+  document.getElementById('editModal').classList.add('open');
+}
+function closeModal(){document.getElementById('editModal').classList.remove('open');}
+
+function calcEditDurations(){
+  var bil=parseDate(g('e_bildirim_tarihi')),irs=parseDate(g('e_irsaliye_tarihi'));
+  var iem=parseDate(g('e_is_emri_acilis')),kge=parseDate(g('e_kalite_gelis'));
+  var ura=parseDate(g('e_uretim_aktarim')),kat=parseDate(g('e_kaliteye_aktarim'));
+  var sda=parseDate(g('e_sevk_depo_aktarim')),isv=parseDate(g('e_iade_sevk_tarihi'));
+  var d2=daysDiff(irs,iem),d7=daysDiff(sda,isv);
+  sv('ed_1',fmtDays(daysDiff(bil,irs)));sv('ed_2',fmtDays(d2));sv('ed_3',fmtDays(daysDiff(iem,kge)));
+  sv('ed_4',fmtDays(daysDiff(kge,ura)));sv('ed_5',fmtDays(daysDiff(kat,ura)));
+  sv('ed_6',fmtDays(daysDiff(kat,sda)));sv('ed_7',fmtDays(d7));
+  sv('ed_toplam',(d2!==null&&d7!==null)?fmtDays(d2+d7):'—');
+  var mut=g('e_mutabakat'),isvStr=g('e_iade_sevk_tarihi').trim(),durum='—';
+  if(mut==='İade Ret') durum='İade Ret';
+  else if(mut==='İade Kabul') durum=isvStr?'Kapalı':'Açık';
+  var el=document.getElementById('ed_durum');
+  if(el){
+    el.value=durum;
+    el.style.color=durum==='İade Ret'?'#ca8a04':durum==='Kapalı'?'#16a34a':durum==='Açık'?'#dc2626':'#888';
+  }
+}
+function updateRecord(){
+  var idx=parseInt(document.getElementById('edit_idx').value),r=records[idx];
+  var mut=g('e_mutabakat'),isvStr=g('e_iade_sevk_tarihi').trim();
+  var bil=parseDate(g('e_bildirim_tarihi')),irs=parseDate(g('e_irsaliye_tarihi'));
+  var iem=parseDate(g('e_is_emri_acilis')),kge=parseDate(g('e_kalite_gelis'));
+  var ura=parseDate(g('e_uretim_aktarim')),kat=parseDate(g('e_kaliteye_aktarim'));
+  var sda=parseDate(g('e_sevk_depo_aktarim')),isvd=parseDate(isvStr);
+  var d1=daysDiff(bil,irs),d2=daysDiff(irs,iem),d3=daysDiff(iem,kge);
+  var d4=daysDiff(kge,ura),d5=daysDiff(kat,ura),d6=daysDiff(kat,sda),d7=daysDiff(sda,isvd);
+  var durum='—';
+  if(mut==='İade Ret') durum='İade Ret';
+  else if(mut==='İade Kabul') durum=isvStr?'Kapalı':'Açık';
+  records[idx]=Object.assign(r,{isKolu:g('e_is_kolu'),musteri:g('e_musteri'),bildirimNo:g('e_bildirim_no'),
+    bildirimTarihi:g('e_bildirim_tarihi'),karelStok:g('e_karel_stok'),urunTanimi:g('e_urun_tanimi'),
+    proje:g('e_proje'),hataTuru:g('e_hata_turu'),mutabakat:mut,garantiDurumu:g('e_garanti'),
+    irsaliyeTarihi:g('e_irsaliye_tarihi'),isEmriTarihi:g('e_is_emri_acilis'),
+    kaliteGelisTarihi:g('e_kalite_gelis'),uretimAktarimTarihi:g('e_uretim_aktarim'),
+    kaliteAktarimTarihi:g('e_kaliteye_aktarim'),sevkDepoTarihi:g('e_sevk_depo_aktarim'),
+    iadeSevkTarihi:isvStr,d1:d1,d2:d2,d3:d3,d4:d4,d5:d5,d6:d6,d7:d7,
+    toplam:(d2!==null&&d7!==null)?d2+d7:null,durum:durum});
+  closeModal();applyFilters();updateSummary();
+}
+function deleteRecord(){
+  if(!confirm('Bu kaydı silmek istediğinize emin misiniz?'))return;
+  var idx=parseInt(document.getElementById('edit_idx').value);
+  records.splice(idx,1);records.forEach(function(r,i){r.id=i+1;});
+  closeModal();applyFilters();updateSummary();
+}
+
+function applyFilters(){
+  var fm=g('f_musteri').toLowerCase(),fbn=g('f_bildirim_no').toLowerCase();
+  var fks=g('f_karel_stok').toLowerCase(),fu=g('f_urun').toLowerCase(),fp=g('f_proje').toLowerCase();
+  var tarihVal = g('f_bildirim_tarihi').trim();
+
+  var fik=g('f_is_kolu'),fh=g('f_hata');
+  var fmut=g('f_mutabakat'),fg=g('f_garanti'),fd=g('f_durum');
+  
+  // Tarih aralığı veya tek tarih çözme (örn: 01.04.2026 - 30.04.2026 veya tek tarih)
+  var fBas = null, fBit = null;
+  if(tarihVal.includes('-')) {
+    var parts = tarihVal.split('-').map(function(s){ return s.trim(); });
+    fBas = parseDate(parts[0]);
+    fBit = parseDate(parts[1]);
+  } else if(tarihVal) {
+    fBas = parseDate(tarihVal);
+    fBit = parseDate(tarihVal);
+  }
+  if(fBas) fBas.setHours(0,0,0,0);
+  if(fBit) fBit.setHours(23,59,59,999);
+
+  filteredRecords=records.filter(function(r){
+    if(fm&&r.musteri.toLowerCase().indexOf(fm)===-1)return false;
+    if(fbn&&r.bildirimNo.toLowerCase().indexOf(fbn)===-1)return false;
+    if(fks&&r.karelStok.toLowerCase().indexOf(fks)===-1)return false;
+    if(fu&&r.urunTanimi.toLowerCase().indexOf(fu)===-1)return false;
+    if(fp&&r.proje.toLowerCase().indexOf(fp)===-1)return false;
+    
+    // Tarih filtreleme
+    if(fBas || fBit){
+      var rDate = parseDate(r.bildirimTarihi);
+      if(rDate){
+        rDate.setHours(0,0,0,0);
+        if(fBas && rDate < fBas) return false;
+        if(fBit && rDate > fBit) return false;
+      } else {
+        return false;
+      }
+    }
+
+    if(fik&&r.isKolu!==fik)return false;
+    if(fh&&r.hataTuru!==fh)return false;
+    if(fmut&&r.mutabakat!==fmut)return false;
+    if(fg&&r.garantiDurumu!==fg)return false;
+    if(fd&&r.durum!==fd)return false;
+    return true;
+  });
+  renderReport();updateSummary();
+  var fc = document.getElementById('filter-count');
+  if(fc) fc.textContent=filteredRecords.length+' kayıt gösteriliyor';
+}
+function clearFilters(){
+  ['f_musteri','f_bildirim_no','f_bildirim_tarihi','f_karel_stok','f_urun','f_proje'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['f_is_kolu','f_hata','f_mutabakat','f_garanti','f_durum'].forEach(function(id){var el=document.getElementById(id);if(el)el.selectedIndex=0;});
+  filteredRecords=records.slice();renderReport();updateSummary();
+  var fc = document.getElementById('filter-count');
+  if(fc) fc.textContent=records.length+' kayıt gösteriliyor';
+}
+function updateSummary(){
+  var st = document.getElementById('s-toplam');
+  var sa = document.getElementById('s-acik');
+  var sk = document.getElementById('s-kapali');
+  var sr = document.getElementById('s-ret');
+  if(st) st.textContent=filteredRecords.length;
+  if(sa) sa.textContent=filteredRecords.filter(function(r){return r.durum==='Açık';}).length;
+  if(sk) sk.textContent=filteredRecords.filter(function(r){return r.durum==='Kapalı';}).length;
+  if(sr) sr.textContent=filteredRecords.filter(function(r){return r.durum==='İade Ret';}).length;
+}
+function badge(d){
+  if(d==='İade Ret') return '<span class="badge sari">İade Ret</span>';
+  if(d==='Kapalı') return '<span class="badge green">Kapalı</span>';
+  if(d==='Açık') return '<span class="badge kirmizi">Açık</span>';
+  return '<span class="badge gray">'+d+'</span>';
+}
+function renderReport(){
+  var tbody=document.getElementById('report-body');
+  if(!tbody) return;
+  if(!filteredRecords.length){
+    tbody.innerHTML='<tr class="empty-row"><td colspan="21" style="text-align:center;padding:2rem;color:#999">'+(records.length?'Filtre sonucu bulunamadı.':'Henüz kayıt yok.')+'</td></tr>';return;
+  }
+  tbody.innerHTML=filteredRecords.map(function(r,i){
+    var gi=records.indexOf(r);
+    return '<tr><td><button type="button" class="edit-btn" onclick="openEditModal('+gi+')">&#9998; Düzenle</button></td>'
+      +'<td>'+(i+1)+'</td><td>'+r.musteri+'</td><td>'+r.isKolu+'</td>'
+      +'<td>'+r.bildirimNo+'</td><td>'+r.bildirimTarihi+'</td>'
+      +'<td>'+r.karelStok+'</td><td>'+r.urunTanimi+'</td><td>'+r.proje+'</td>'
+      +'<td>'+r.hataTuru+'</td><td>'+r.mutabakat+'</td><td>'+r.garantiDurumu+'</td>'
+      +'<td style="text-align:center">'+fmtDays(r.d1)+'</td>'
+      +'<td style="text-align:center">'+fmtDays(r.d2)+'</td>'
+      +'<td style="text-align:center">'+fmtDays(r.d3)+'</td>'
+      +'<td style="text-align:center">'+fmtDays(r.d4)+'</td>'
+      +'<td style="text-align:center">'+fmtDays(r.d5)+'</td>'
+      +'<td style="text-align:center">'+fmtDays(r.d6)+'</td>'
+      +'<td style="text-align:center">'+fmtDays(r.d7)+'</td>'
+      +'<td style="text-align:center;font-weight:700">'+fmtDays(r.toplam)+'</td>'
+      +'<td>'+badge(r.durum)+'</td></tr>';
+  }).join('');
+}
+function sortTable(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=1;}
+  var keys=['id','musteri','isKolu','bildirimNo','bildirimTarihi','karelStok','urunTanimi','proje','hataTuru','mutabakat','garantiDurumu','d1','d2','d3','d4','d5','d6','d7','toplam','durum'];
+  var k=keys[col];
+  filteredRecords.sort(function(a,b){
+    var av=a[k]===null||a[k]===undefined?'':a[k],bv=b[k]===null||b[k]===undefined?'':b[k];
+    return av>bv?sortDir:av<bv?-sortDir:0;
+  });
+  renderReport();
+}
+function exportCSV(){
+  var headers=['#','Müşteri','İş Kolu','Bildirim No','Bildirim Tarihi','Karel Stok No','Ürün Tanımı','Proje','Hata Türü','Mutabakat','Garanti','Bill.→Depo','Depo→İşEm.','İşEm.→Kal.','Kal.→Üret.','Üret.→Kal.','Kal.→SevkD.','SevkD.→Sevk.','Toplam','Durum'];
+  var rows=filteredRecords.map(function(r,i){
+    return [i+1,r.musteri,r.isKolu,r.bildirimNo,r.bildirimTarihi,r.karelStok,r.urunTanimi,r.proje,r.hataTuru,r.mutabakat,r.garantiDurumu,r.d1===null?'':r.d1,r.d2===null?'':r.d2,r.d3===null?'':r.d3,r.d4===null?'':r.d4,r.d5===null?'':r.d5,r.d6===null?'':r.d6,r.d7===null?'':r.d7,r.toplam===null?'':r.toplam,r.durum].map(function(v){return'"'+String(v).replace(/"/g,'""')+'"';}).join(',');
+  });
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\uFEFF'+[headers.join(',')].concat(rows).join('\n')],{type:'text/csv;charset=utf-8'}));
+  a.download='iade_takip_raporu.csv';a.click();
+}
+
+var adminUsers = [
+  {name:'aleyna.nurdogdu', roller:['Planlama']},
+  {name:'busra.ataturk', roller:['Kalite']}
+];
+
+var rolSecenekleri = ['Kalite','Kalite - Proje (SOP)','Üretim - Kalite','Planlama','Planlama (Sevkiyat Depo)','Üretim','Üretim / Planlama'];
+
+function renderAdminTable(){
+  var tbody = document.getElementById('admin-body');
+  if(!tbody) return;
+  tbody.innerHTML = adminUsers.map(function(u,i){
+    var opts = rolSecenekleri.map(function(r){
+      var sel = u.roller && u.roller.indexOf(r)!==-1 ? ' selected' : '';
+      return '<option value="'+r+'"'+sel+'>'+r+'</option>';
+    }).join('');
+    var rollerGoster = (u.roller && u.roller.length) ? u.roller.join(', ') : '—';
+    return '<tr style="border-bottom:1px solid #f0f0ee" id="arow-'+i+'">'
+      +'<td style="padding:6px 10px"><input type="checkbox" class="admin-chk" data-idx="'+i+'"></td>'
+      +'<td style="padding:6px 10px;color:#aaa;cursor:grab">&#8801;</td>'
+      +'<td style="padding:4px 8px"><input type="text" value="'+(u.name || '')+'" oninput="adminUsers['+i+'].name=this.value" style="width:100%;padding:4px 7px;border:1px solid #ccc;border-radius:5px;font-size:12px"></td>'
+      +'<td style="padding:4px 8px">'
+      +'<select multiple onchange="updateRoller('+i+',this)" style="width:100%;padding:4px 7px;border:1px solid #ccc;border-radius:5px;font-size:12px;min-height:60px">'+opts+'</select>'
+      +'<div style="font-size:10px;color:#888;margin-top:3px">Seçili: <span id="rol-label-'+i+'">'+rollerGoster+'</span></div>'
+      +'</td>'
+      +'</tr>';
+  }).join('');
+}
+
+function addAdminRow(){
+  adminUsers.push({name:'', roller:['Kalite']});
+  renderAdminTable();
+  var rows = document.querySelectorAll('#admin-body tr');
+  if(rows.length){
+    var inp = rows[rows.length-1].querySelector('input[type=text]');
+    if(inp) inp.focus();
+  }
+}
+
+function updateRoller(idx, sel){
+  var selected = [];
+  for(var i=0;i<sel.options.length;i++){
+    if(sel.options[i].selected) selected.push(sel.options[i].value);
+  }
+  adminUsers[idx].roller = selected;
+  var lbl = document.getElementById('rol-label-'+idx);
+  if(lbl) lbl.textContent = selected.length ? selected.join(', ') : '—';
+}
+
+function saveAdminData(){
+  alert(adminUsers.length + ' kullanıcı kaydedildi.');
+}
+
+function toggleAllAdmin(chk){
+  document.querySelectorAll('.admin-chk').forEach(function(c){c.checked=chk.checked;});
+}
+
+function deleteSelectedAdmin(){
+  var checked = [];
+  document.querySelectorAll('.admin-chk:checked').forEach(function(c){checked.push(parseInt(c.getAttribute('data-idx')));});
+  if(!checked.length){alert('Silinecek satir secin.');return;}
+  if(!confirm(checked.length+' satir silinecek. Emin misiniz?'))return;
+  adminUsers = adminUsers.filter(function(_,i){return checked.indexOf(i)===-1;});
+  var chkAll = document.getElementById('admin-check-all');
+  if(chkAll) chkAll.checked=false;
+  renderAdminTable();
+}
+
+window.onload = function(){
+  generateRandom();
+  renderAdminTable();
+  var path = window.location.pathname;
+  var navBtns = document.querySelectorAll('.nav button');
+  if(path.indexOf('kayit')!==-1){
+    showTab('kayit', navBtns[0]);
+  } else if(path.indexOf('rapor')!==-1){
+    showTab('rapor', navBtns[1]);
+  } else {
+    showTab('admin', navBtns[2]);
+  }
+};
+</script>
+
+
+</div></body></html>
